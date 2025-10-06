@@ -1,0 +1,28 @@
+services:
+  fritz-voice-assistant:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: fritz-voice-assistant:latest
+    network_mode: "host"
+    restart: unless-stopped
+    environment:
+      - OPENAI_API_KEY 
+    volumes:
+      - ./config/asterisk.conf:/etc/asterisk/asterisk.conf:ro
+      - ./config/pjsip.conf:/etc/asterisk/pjsip.conf:ro
+      - ./config/extensions.conf:/etc/asterisk/extensions.conf:ro
+      - ./config/rtp.conf:/etc/asterisk/rtp.conf:ro
+      - ./config/http.conf:/etc/asterisk/http.conf:ro
+      - ./config/ari.conf:/etc/asterisk/ari.conf:ro
+      - ./config/freya.yaml:/opt/freya/phone/freya.yaml:ro
+
+  wyoming-piper:
+    image: rhasspy/wyoming-piper:latest
+    container_name: wyoming-piper
+    restart: unless-stopped
+    ports:
+      - "10200:10200"
+    volumes:
+      - /home/andi/docker-volumes/wyoming-piper:/data
+    command: --voice de_DE-ramona-low --update

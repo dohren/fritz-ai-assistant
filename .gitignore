@@ -1,0 +1,13 @@
+.idea/
+git st.quarkus/
+.vscode/
+.cache/
+old/
+.env
+venv
+mcp_config.yaml
+**/__pycache__/
+**/*.dat
+**/haarcascade_frontalface_default.xml
+*.avi
+config/pjsip.conf

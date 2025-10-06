@@ -1,0 +1,62 @@
+# ============================================================
+# Freya – zentrale Konfigurationsdatei
+# Speicherort (empfohlen): /config/freya.yaml
+# Diese Datei wird zur Laufzeit eingelesen – kein Code ändern.
+# ============================================================
+
+openai:
+  # Dein OpenAI API-Key (environment variable from host)
+  # api_key: "api key"
+  # Modell für Speech-to-Text (ASR / Transkription)
+  stt_model: "gpt-4o-mini-transcribe"
+
+ari:
+  # ARI-HTTP/WS-Basis-URL deines Asterisk
+  # - Lokal:        http://127.0.0.1:8088/ari
+  # - Im Docker-Netz: z. B. http://asterisk:8088/ari
+  base: "http://127.0.0.1:8088/ari"
+  # ARI-User (ari.conf) – read_only muss für Aktionen = no sein
+  user: "freya"
+  # ARI-Passwort (ari.conf)
+  pass: "freya-secret"
+  # Name deiner Stasis-App (muss mit dem im Code/Dialplan übereinstimmen)
+  app:  "freya_ari"
+
+media:
+  # Ziel-IP für Unicast-RTP (Asterisk → App)
+  # - Lokal: 127.0.0.1
+  # - Docker: Service-Name der App, z. B. "freya-app"
+  ext_host_ip: "127.0.0.1"
+  # Ziel-Port (μ-law/PT=0), auf dem dein RtpReceiver lauscht
+  ext_host_port: 12000
+  # Sprache für STT/TTS
+  lang: "de"
+  # Standard-Begrüßung (wird gesprochen, wenn kein init-Text übergeben wurde)
+  welcome: "Willkommen! Wie kann ich helfen?"
+
+wyoming:
+  # Host für Wyoming-Dienste (Piper/Whisper), falls verwendet
+  # - Lokal: 127.0.0.1
+  # - Docker: z. B. "wyoming"
+  host: "127.0.0.1"
+  # Piper (TTS) – deutscher Port
+  tts_de: 10200
+  # Whisper (ASR) – deutscher Port
+  asr_de: 10300
+
+dialer:
+  # Wie Asterisk wählen soll:
+  #   "PJSIP/{number}@freya-assistant" / "Local/{number}@freya-out" …
+  endpoint_template: "PJSIP/{number}@fritz-endpoint"
+  timeout_s: 30
+  # Dialer-HTTP-API-Port
+  api_port: 8099   
+
+# (Optional: alten Top-Level api_port kannst du löschen)
+# api_port: 8099
+
+n8n:
+  webhook_url: "http://localhost:5678/webhook/on_message"
+
+# Port der kleinen Dialer-HTTP-API (nur falls du sie nutzt)
+api_port: 8099

@@ -1,0 +1,68 @@
+; =============================================================================
+; FRITZ!Box PJSIP template (no secrets inside)
+; How to use:
+; 1) Replace all placeholders: <FRITZ_IP>, <FRITZ_USER>, <FRITZ_PASS>
+; 2) Save as /etc/asterisk/pjsip.conf (or mount it there)
+; 3) In Asterisk CLI: `pjsip reload`
+; Notes:
+; - Codec: FRITZ!Box prefers PCMA (alaw). ULAW enabled too for simplicity.
+; - NAT-friendly flags set (rtp_symmetric/force_rport/rewrite_contact).
+; - If you prefer DNS: you can swap <FRITZ_IP> with fritz.box.
+; =============================================================================
+
+[global]
+type=global
+endpoint_identifier_order=ip,username,anonymous
+
+[transport-udp]
+type=transport
+protocol=udp
+bind=0.0.0.0:5060
+
+; --- Credentials (replace) ---
+[fritz-auth]
+type=auth
+auth_type=userpass
+username=<FRITZ_USER>          ; e.g. Assistant (the IP phone user you created on FRITZ!Box)
+password=<FRITZ_PASS>          ; the password for that user
+
+; --- AOR: where to send requests (FRITZ!Box) ---
+[fritz-aor]
+type=aor
+max_contacts=1
+contact=sip:<FRITZ_IP>:5060    ; e.g. 192.168.178.1:5060
+
+; --- Endpoint for FRITZ!Box ---
+[fritz-endpoint]
+type=endpoint
+transport=transport-udp
+context=from-fritz
+disallow=all
+allow=alaw,ulaw
+outbound_auth=fritz-auth
+aors=fritz-aor
+from_user=<FRITZ_USER>         ; must match the FRITZ user name
+from_domain=<FRITZ_IP>         ; e.g. 192.168.178.1  (or fritz.box)
+direct_media=no
+rtp_symmetric=yes
+force_rport=yes
+rewrite_contact=yes
+
+; Optional: also match by DNS name
+[fritz-identify]
+type=identify
+endpoint=fritz-endpoint
+match=<FRITZ_IP>               ; e.g. 192.168.178.1
+; match=fritz.box
+
+; --- Outbound registration to FRITZ!Box ---
+[fritz-registration]
+type=registration
+outbound_auth=fritz-auth
+server_uri=sip:<FRITZ_IP>:5060;transport=udp
+client_uri=sip:<FRITZ_USER>@<FRITZ_IP>
+contact_user=<FRITZ_USER>
+retry_interval=60
+expiration=3600
+transport=transport-udp
+auth_rejection_permanent=no
