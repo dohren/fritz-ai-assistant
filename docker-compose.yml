@@ -15,7 +15,7 @@ services:
       - ./config/rtp.conf:/etc/asterisk/rtp.conf:ro
       - ./config/http.conf:/etc/asterisk/http.conf:ro
       - ./config/ari.conf:/etc/asterisk/ari.conf:ro
-      - ./config/freya.yaml:/opt/freya/phone/freya.yaml:ro
+      - ./config/freya.yaml:/opt/freya/ari_application/freya.yaml:ro
 
   wyoming-piper:
     image: rhasspy/wyoming-piper:latest

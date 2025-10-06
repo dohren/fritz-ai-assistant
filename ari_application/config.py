@@ -3,9 +3,8 @@ from functools import lru_cache
 import os, yaml
 
 DEFAULTS = [
-    os.getenv("FREYA_CONFIG", ""),            
-    "/etc/asterisk/freya.yaml",               
-    "../asterisk/etc/freya.yaml",    
+    os.getenv("FREYA_CONFIG", ""),                           
+    "../config/freya.yaml",    
 ]
 
 @lru_cache(maxsize=1)
