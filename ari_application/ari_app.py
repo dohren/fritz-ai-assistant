@@ -136,7 +136,7 @@ def say(text: str):
 
 # ---------- Call-Start ----------
 def on_start(ev):
-    global ext_id, bridge_id, caller_id, call_alive, TTS_DST_IP, TTS_DST_PORT
+    global ext_id, bridge_id, caller_id, caller_number, call_alive, TTS_DST_IP, TTS_DST_PORT
     if not is_caller(ev):
         return
     caller_id = ev["channel"]["id"]

@@ -23,6 +23,38 @@ Designed to trigger/receive data from **n8n** via a simple webhook.
 
 ---
 
+## 📞 FRITZ!Box: New IP Phone Configuration
+
+1. **Open FRITZ!Box Web Interface**  
+   Go to [http://fritz.box](http://fritz.box) or `http://192.168.178.1`.
+
+2. **Navigate to Telephony → Telephone Devices**  
+   Click **“New Device”** → choose **“Telephone (with LAN/WLAN)”** → click **Next**.
+
+3. **Select “IP Telephone”**  
+   Give it a name, e.g. `freya`.
+
+4. **Create credentials**  
+   - **Username:** `freya`  
+   - **Password:** (choose a strong password, you’ll use it in `pjsip.conf`)  
+   - **Allow registration from the home network:** ✅  
+   - Optionally allow from internet if Asterisk runs remotely.
+
+5. **Finish setup**  
+   - The FRITZ!Box shows:  
+     - **Username:** `freya`  
+     - **Registrar:** `fritz.box` or `192.168.178.1`  
+   - Note these values for your Asterisk config.
+
+6. **Test registration**  
+   After starting your Docker container, open Asterisk CLI:
+   ```bash
+   docker exec -it fritz-voice-assistant asterisk -rvvv
+   pjsip show registrations
+   ```
+   You should see `Registered` next to your `fritz` endpoint.
+
+
 ## Minimal project layout (only what you need)
 
 ```
