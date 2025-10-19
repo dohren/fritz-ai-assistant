@@ -25,4 +25,4 @@ services:
       - "10200:10200"
     volumes:
       - /home/andi/docker-volumes/wyoming-piper:/data
-    command: --voice de_DE-ramona-low --update
+    command: --voice de_DE-kerstin-low --update

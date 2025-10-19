@@ -48,7 +48,7 @@ segmenter_instance = None
 TTS_DST_IP = None
 TTS_DST_PORT = None
 caller_number = None
-
+tts_stop_event = None
 
 
 # ---------- ARI-Helper ----------
@@ -90,11 +90,13 @@ def safe_add(bridge, ch):
 
 # ---------- Cleanup ----------
 def cleanup_call():
-    global ext_id, bridge_id, caller_id, caller_number, call_alive 
-    # Bridge aufräumen
+    global ext_id, bridge_id, caller_id, caller_number, call_alive, tts_stop_event
+
+    # >>> laufende TTS (falls vorhanden) sofort abbrechen
     try:
-        if bridge_id:
-            requests.delete(f"{ARI_BASE}/bridges/{bridge_id}", auth=(ARI_USER, ARI_PASS), timeout=2)
+        if tts_stop_event:
+            tts_stop_event.set()
+            tts_stop_event = None
     except Exception:
         pass
 
@@ -123,14 +125,22 @@ def cleanup_call():
 
 # ---------- TTS Helper: über denselben Socket senden wie Empfang ----------
 def say(text: str):
+    global tts_stop_event
     if not (TTS_DST_IP and TTS_DST_PORT and rtp_receiver and rtp_receiver._sock):
         print("[TTS] no dst/socket available")
         return
-    # Nicht blockierend: TTS in Thread schicken
+
+    # alten TTS stoppen, falls aktiv
+    if tts_stop_event:
+        tts_stop_event.set()
+
+    # neuen Event erstellen
+    tts_stop_event = threading.Event()
+
     threading.Thread(
         target=send_tts_to_rtp,
         args=(text, TTS_DST_IP, TTS_DST_PORT),
-        kwargs={"sock": rtp_receiver._sock},  # <— gleicher UDP-Socket wie Receiver!
+        kwargs={"sock": rtp_receiver._sock, "stop_event": tts_stop_event},
         daemon=True,
     ).start()
 

@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 import asyncio, socket, struct, time, audioop, random
 from wyoming.client import AsyncTcpClient
 from wyoming.tts import Synthesize
@@ -16,11 +18,11 @@ def reset_tts_rtp_state():
     """Pro neuem Call aufrufen: neue SSRC, zufälliger Startwert für seq/ts."""
     _RTP_STATE["ssrc"] = random.getrandbits(32)
     _RTP_STATE["seq"]  = random.randint(0, 65535)
-    _RTP_STATE["ts"]   = random.randint(0, 2**31-1)
+    _RTP_STATE["ts"]   = random.randint(0, 2**31 - 1)
 
 async def _tts_pcm16_16k(text: str) -> bytes:
     pcm = bytearray()
-    async with AsyncTcpClient(WYOMING_HOST, WYOMING_TTS_PORT) as c: 
+    async with AsyncTcpClient(WYOMING_HOST, WYOMING_TTS_PORT) as c:
         await c.write_event(Synthesize(text=text).event())
         while True:
             ev = await c.read_event()
@@ -32,7 +34,13 @@ async def _tts_pcm16_16k(text: str) -> bytes:
                 break
     return bytes(pcm)
 
-def send_tts_to_rtp(text: str, dst_ip: str, dst_port: int, sock: socket.socket | None = None) -> int:
+def send_tts_to_rtp(
+    text: str,
+    dst_ip: str,
+    dst_port: int,
+    sock: socket.socket | None = None,
+    stop_event=None,        # <— NEU: optionales Cancel-Flag
+) -> int:
     """
     Erzeugt PCM16@16k mit Wyoming/Piper, wandelt zu 8k μ-law und sendet
     in RTP-PCMU (PT=0) 20ms-Paketen. Hält seq/ts/ssrc über Aufrufe hinweg.
@@ -45,10 +53,20 @@ def send_tts_to_rtp(text: str, dst_ip: str, dst_port: int, sock: socket.socket |
         print("[TTS] no dst specified")
         return 0
 
+    # Vorab-Abbruch (falls zwischen say() und Synthese schon gecancelt wurde)
+    if stop_event and stop_event.is_set():
+        print("[TTS] cancelled before synth")
+        return 0
+
     print(f"[TTS] dst={dst_ip}:{dst_port} text='{text[:60]}'")
     pcm16_16k = asyncio.run(_tts_pcm16_16k(text))
     if not pcm16_16k:
         print("[TTS] no audio from wyoming")
+        return 0
+
+    # Abbruch-Check vor der Konvertierung (spart CPU)
+    if stop_event and stop_event.is_set():
+        print("[TTS] cancelled before convert")
         return 0
 
     # 16k -> 8k, dann μ-law (16bit -> ulaw bytes)
@@ -74,6 +92,11 @@ def send_tts_to_rtp(text: str, dst_ip: str, dst_port: int, sock: socket.socket |
 
     # sende nur volle step-chunks (einfacher und kompatibler)
     for off in range(0, len(ulaw) - step + 1, step):
+        # Abbruch mitten im Senden
+        if stop_event and stop_event.is_set():
+            print("[TTS] stopped early")
+            break
+
         chunk = ulaw[off:off+step]
         # RTP header: V=2, P=0, X=0, M=marker for first packet, PT, seq, ts, ssrc
         marker = 0x80 if first_pkt else 0x00
@@ -86,6 +109,7 @@ def send_tts_to_rtp(text: str, dst_ip: str, dst_port: int, sock: socket.socket |
         except Exception as e:
             print("[TTS] send error:", e)
             break
+
         pkt_count += 1
         seq = (seq + 1) & 0xFFFF
         ts  = (ts + TS_INC) & 0xFFFFFFFF
