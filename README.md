@@ -1,4 +1,4 @@
-# Freya – Asterisk + FRITZ!Box + ARI (Docker) with n8n & local TTS/STT
+# Prototpye of a Dockerized Phone Assistant Connecting Fritz!Box with n8n Automation
 
 **Freya** connects a **FRITZ!Box** IP phone to **Asterisk (PJSIP)**, handles calls with a **Python ARI app**, and speaks/recognizes speech locally using **Wyoming Piper** (TTS) and remote openai (STT).  
 Designed to trigger/receive data from **n8n** via a simple webhook.
